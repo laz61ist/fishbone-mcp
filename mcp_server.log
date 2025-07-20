@@ -1,0 +1,20 @@
+MCP sunucusu 8000 portunda başlatılıyor...
+Kullanılacak Token: SIMPLE_SECURE_TOKEN_123
+Test etmek için aşağıdaki gibi bir cURL isteği kullanabilirsiniz:
+
+curl -X POST http://localhost:8000/api/fishbone \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer SIMPLE_SECURE_TOKEN_123" \
+-d '{
+  "diagram_id": "diag-123",
+  "problem_statement": "Ürün teslimatlarında gecikme",
+  "categories": [
+    {
+      "category_name": "İnsan",
+      "causes": [
+        { "cause_text": "Yetersiz personel" },
+        { "cause_text": "Eğitim eksikliği" }
+      ]
+    }
+  ]
+}'
