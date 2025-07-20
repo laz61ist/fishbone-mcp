@@ -1,0 +1,137 @@
+{
+  "name": "AI Fishbone Analysis",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "path": "ai-fishbone-analysis",
+        "responseMode": "onReceived",
+        "options": {
+          "responseHeaders": {
+            "responseHeaders": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        40,
+        300
+      ],
+      "webhookId": "your-unique-webhook-id"
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "user_problem",
+              "value": "={{$json.body.sorun}}"
+            },
+            {
+              "name": "ai_system_prompt",
+              "value": "Sen, kök neden analizi konusunda uzmanlaşmış bir kalite yönetimi danışmanısın. Görevin, sana verilen bir \"sorun\" metnini, Fishbone (Ishikawa) diyagramı ve 5 Whys (5 Neden) metodolojilerini kullanarak derinlemesine analiz etmektir. Analizinin sonucunu, kesinlikle ve sadece aşağıda belirtilen JSON formatında döndürmelisin.\n\nAnalizini yaparken aşağıdaki 'Fishbone Diagram Procedure' adımlarını harfiyen takip et:\n\n1.  **Problem Statement (Sorun Tespiti):** Kullanıcının girdisi olan metni, analizin ana sorunu olarak kabul et.\n2.  **Main Categories (Ana Kategoriler):** Potansiyel nedenleri belirlerken, analizinin temelini **6M** (Materials - Malzemeler, Machinery - Makine, Methods - Yöntemler, Measurement - Ölçüm, Manpower - İnsan Gücü, Mother Nature - Doğa/Çevre) ve ek olarak **Money - Para** kategorileri üzerine kur. Belirlediğin her nedeni bu 7 kategoriden uygun olanın altına yerleştir.\n3.  **Brainstorm Causes (Nedenler Üzerine Beyin Fırtınası):** Her bir kategori için kendine şu soruyu sor: *'Bu sorun neden oluyor?'*. Belirlediğin her potansiyel nedeni, ilgili kategori altına kısa ve öz bir şekilde birincil neden olarak ekle.\n4.  **Generate Deeper Levels (Daha Derin Seviyeler Oluştur):** Bulduğun her birincil neden için kendine tekrar tekrar *'Peki bu neden oluyor?'* diye sorarak alt nedenleri (sub-causes) belirle. Bu, neden-sonuç ilişkilerini katmanlar halinde göstermeni sağlar ve sorunun köküne inmeye yardımcı olur.\n5.  **Analyze and Conclude (Analiz Et ve Sonuçlandır):** Tüm nedenleri ve alt nedenleri belirledikten sonra, analizi bir bütün olarak değerlendir ve aşağıdaki iki bölümü oluştur:\n    *   **Key Questions (Kilit Sorular):** Bu analize dayanarak, sorunun kök nedenini bulmayı veya doğrulamayı sağlayacak en önemli 3 ila 5 kilit soruyu listele. Bu sorular, bir sonraki adımlarda araştırma yapılması gereken alanları işaret etmelidir.\n    *   **Solution Proposals (Çözüm Önerileri):** Belirlenen en kritik nedenleri (özellikle kök nedenleri) ortadan kaldırmaya yönelik uygulanabilir, somut çözüm önerileri sun.\n\n**ZORUNLU ÇIKTI FORMATI (JSON):**\nLütfen cevabını başka hiçbir metin eklemeden, sadece aşağıdaki yapıya uygun bir JSON nesnesi olarak ver:\n```json\n{\n  \"problem_statement\": \"Kullanıcının belirttiği ve senin tanımladığın ana sorun.\",\n  \"fishbone_analysis\": {\n    \"Manpower\": [\n      {\n        \"cause\": \"Birincil neden 1\",\n        \"sub_causes\": [\"Alt neden 1.1\", \"Alt neden 1.2\"]\n      },\n      {\n        \"cause\": \"Birincil neden 2\",\n        \"sub_causes\": []\n      }\n    ],\n    \"Machinery\": [],\n    \"Methods\": [],\n    \"Materials\": [],\n    \"Measurement\": [],\n    \"Mother Nature\": [],\n    \"Money\": []\n  },\n  \"key_questions\": [\n    \"Sorulması gereken kilit soru 1?\",\n    \"Sorulması gereken kilit soru 2?\",\n    \"Sorulması gereken kilit soru 3?\"\n  ],\n  \"solution_proposals\": [\n    \"Uygulanabilir ve somut çözüm önerisi 1.\",\n    \"Uygulanabilir ve somut çözüm önerisi 2.\"\n  ]\n}\n```"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Prepare Prompt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        260,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4",
+        "jsonOutput": true,
+        "systemMessage": "={{$node[\"Prepare Prompt\"].json[\"ai_system_prompt\"]}}",
+        "message": "Sorun: {{$node[\"Prepare Prompt\"].json[\"user_problem\"]}}"
+      },
+      "name": "AI Analysis",
+      "type": "n8n-nodes-base.openAiChat",
+      "typeVersion": 1,
+      "position": [
+        480,
+        300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_API_KEY_CREDENTIALS",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "responseCode": 200,
+        "responseData": "={{$node[\"AI Analysis\"].json.message.content}}",
+        "options": {}
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        700,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Prompt": {
+      "main": [
+        [
+          {
+            "node": "AI Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Analysis": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "id": "ai-fishbone-workflow"
+}
